@@ -24,7 +24,6 @@ pub fn part_two(input: &str) -> Option<u64> {
     let mut curr_val = 50;
     for r in rotations {
         let (new_val, visits_zero) = r.apply_with_zero_count(curr_val);
-        println!("curr_val: {curr_val} rotation: {:?} new_val: {new_val} visits_zero: {visits_zero}", r);
         curr_val = new_val;
         n_zero += visits_zero;
     }
@@ -53,16 +52,17 @@ impl Rotation {
 
     fn apply(&self, val: u64) -> u64 {
         match self {
-            Rotation::Left(x) => (val + 100 - (x % 100)) % 100,
+            Rotation::Left(x) => (val + 100 - x % 100) % 100,
             Rotation::Right(x) => (val + x) % 100,
         }
     }
 
     fn apply_with_zero_count(&self, val: u64) -> (u64, u64) {
-        match self {
-            Rotation::Left(x) => ((val + 100 - (x % 100)) % 100, (((100 - val) % 100) + x) / 100),
-            Rotation::Right(x) => ((val + x) % 100, (val + x) / 100),
-        }
+        let zero_count = match self {
+            Rotation::Left(x) => ((100 - val) % 100 + x) / 100,
+            Rotation::Right(x) => (val + x) / 100,
+        };
+        (self.apply(val), zero_count)
     }
 }
 
