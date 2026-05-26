@@ -1,3 +1,5 @@
+use std::ops::DerefMut;
+
 advent_of_code::solution!(4);
 
 pub fn part_one(input: &str) -> Option<u64> {
@@ -7,7 +9,36 @@ pub fn part_one(input: &str) -> Option<u64> {
 }
 
 pub fn part_two(input: &str) -> Option<u64> {
-    None
+    let mut grid = Grid::from_input(input);
+    let mut count = 0;
+
+    loop {
+        let locs = grid.accessible_roll_locs();
+        if locs.len() > 0 {
+            grid.remove_locs(&locs);
+            count += locs.len() as u64;
+        } else {
+            break;
+        }
+    }
+
+    Some(count)
+}
+
+#[derive(Copy, Clone, Debug)]
+enum CellKind {
+    PaperRoll,
+    Empty
+}
+
+impl CellKind {
+    fn from_char(c: char) -> Self {
+        match c {
+            '@' => CellKind::PaperRoll,
+            '.' => CellKind::Empty,
+            _ => panic!("Invalid cell kind: {}", c),
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -29,6 +60,32 @@ impl Grid {
                 .count() as u64
             )
             .sum()
+    }
+
+    fn accessible_roll_locs(&self) -> Vec<(usize, usize)> {
+        let mut locs = vec![];
+
+        for (i, row) in self.0.iter().enumerate() {
+            for (j, _) in row.iter().enumerate() {
+                if self.is_accessible(i, j) {
+                    locs.push((i, j))
+                }
+            }
+        }
+
+        locs
+    }
+
+    fn remove_locs(&mut self, locs: &[(usize, usize)]) {
+        let cells = self.0.clone();
+
+        for (i, row) in cells.iter().enumerate() {
+            for (j, _) in row.iter().enumerate() {
+                if locs.contains(&(i, j)) {
+                    self.0[i][j] = CellKind::Empty
+                }
+            }
+        }
     }
 
     fn neighbour(&self, i: usize, j: usize, di: isize, dj: isize) -> Option<&CellKind> {
@@ -55,22 +112,6 @@ impl Grid {
     }
 }
 
-#[derive(Copy, Clone, Debug)]
-enum CellKind {
-    PaperRoll,
-    Empty
-}
-
-impl CellKind {
-    fn from_char(c: char) -> Self {
-        match c {
-            '@' => CellKind::PaperRoll,
-            '.' => CellKind::Empty,
-            _ => panic!("Invalid cell kind: {}", c),
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -84,6 +125,6 @@ mod tests {
     #[test]
     fn test_part_two() {
         let result = part_two(&advent_of_code::template::read_file("examples", DAY));
-        assert_eq!(result, None);
+        assert_eq!(result, Some(43));
     }
 }
